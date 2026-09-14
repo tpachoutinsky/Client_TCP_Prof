@@ -26,8 +26,8 @@ tasks.withType<JavaCompile> {
 }
 
 application {
-    mainModule.set("fr.btsciel.javafxmaster")
-    mainClass.set("fr.btsciel.javafxmaster.HelloApplication")
+    mainModule.set("com.astier.bts.client_tcp_prof")
+    mainClass.set("com.astier.bts.client_tcp_prof.HelloApplication")
 }
 
 javafx {
