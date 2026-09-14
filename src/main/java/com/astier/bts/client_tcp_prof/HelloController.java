@@ -57,15 +57,28 @@ public class HelloController implements Initializable {
 
 
     private void envoyer() throws InterruptedException {
-       //todo
+
     }
 
     private void deconnecter() throws InterruptedException {
-        //todo
+
     }
 
     private void connecter() throws UnknownHostException {
-        TextFieldIP.get
+        adresse = TextFieldIP.getText();
+        port = TextFieldPort.getText();
+        if (adresse.isEmpty()||port.isEmpty()){
+            TextAreaReponses.appendText("Erreur : veuillez entrer un adresse et un port\n");
+            return;
+        }
+        int portInt = Integer.parseInt(port);
+        InetAddress serveur = InetAddress.getByName(adresse);
+        tcp = new TCP(serveur, portInt, this);
+        tcp.connection();
+        tcp.start();
+        enRun = true;
+        voyant.setFill(GREEN);
+        TextAreaReponses.appendText("Connexion en cours\n");
     }
 
 }

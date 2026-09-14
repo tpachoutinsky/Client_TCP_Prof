@@ -50,7 +50,7 @@ public class TCP extends Thread {
 
 
     public void connection() {
-        //todo
+
     }
 
     public void deconnection() throws InterruptedException {
