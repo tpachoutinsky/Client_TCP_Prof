@@ -1,45 +1,29 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.astier.bts.client_tcp_prof.tcp;
 
-
 import com.astier.bts.client_tcp_prof.HelloController;
+import com.astier.bts.client_tcp_prof.aes.Aes_cbc;
 import javafx.application.Platform;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.sql.SQLOutput;
-import java.util.ArrayList;
-import java.util.Locale;
+import java.util.Arrays;
 
-
-import static javafx.scene.paint.Color.RED;
-
-/**
- * @author Michael
- */
-
-public class TCP extends Thread {
+public class TCPBin extends Thread {
     int port;
     InetAddress serveur;
     Socket socket;
     boolean marche = false;
     public boolean connection = false;
-    PrintStream out;
-    BufferedReader in;
+    OutputStream out;
+    InputStream  in;
     HelloController fxmlCont;
 
-    public TCP() {}
 
-    public TCP(InetAddress serveur, int port, HelloController fxmlCont) {
+
+    public TCPBin() {}
+
+    public TCPBin(InetAddress serveur, int port, HelloController fxmlCont) {
         this.port = port;
         this.serveur = serveur;
         this.fxmlCont = fxmlCont;
@@ -49,8 +33,8 @@ public class TCP extends Thread {
     public void connection() {
         try {
             socket = new Socket(serveur, port);
-            out = new PrintStream(socket.getOutputStream());
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = socket.getOutputStream();
+            in = socket.getInputStream();
             marche = true;
             connection = true;
             System.out.println("Connexion TCP OK");
@@ -86,36 +70,54 @@ public class TCP extends Thread {
         }
     }
 
-
     public void requette(String laRequette) throws IOException {
-        out.println(laRequette);
-        System.out.println("la requette " + laRequette+"\n");
+        byte[] clair = laRequette.getBytes();
+        byte[] crypte = fxmlCont.aes.cryptage(clair);
+
+        out.write(crypte);
+        out.flush();
+
+        System.out.println("Requête cryptée envoyée (" + crypte.length + " octets)");
     }
 
+    @Override
     public void run() {
-        while (marche) {
-            String message = null;
-            char[] chars = new char [65535];
-            int oclus = 0;
-            try{
-                oclus = in.read(chars);
-                if(oclus > 0){
-                    message = new String(chars,0,oclus);
-                    updateMessage(message);
+        try {
+            while (marche) {
+
+                byte[] buffer = new byte[65535];
+                int lu = in.read(buffer);
+
+                if (lu == -1) {
+                    marche = false;
+                    break;
                 }
-            }catch (Exception e){
-                marche = false;
-                connection = false;
 
-                Platform.runLater(() -> {
-                    fxmlCont.deconnecter.fire();
-                });
+                byte[] crypte = Arrays.copyOf(buffer, lu);
 
-                System.out.println("Connexion perdue");
+
+                byte[] clair = fxmlCont.aes.decryptage(crypte);
+
+                String message = new String(clair);
+
+                updateMessage("Message serveur : " + message);
             }
 
+        } catch (Exception e) {
+            updateMessage("Erreur dans run() : " + e.getMessage());
         }
+
+        marche = false;
+        connection = false;
+
+        Platform.runLater(() ->
+                fxmlCont.TextAreaReponses.appendText("Connexion perdue\n")
+        );
     }
+
+
+
+
 
     /*
     Pour déclencher une opération graphique en dehors du thread graphique  utiliser

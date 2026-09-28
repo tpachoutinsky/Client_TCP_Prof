@@ -2,6 +2,8 @@ module com.astier.bts.client_tcp_prof {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.logging;
+    requires java.sql;
+    requires java.net.http;
 
 
     opens com.astier.bts.client_tcp_prof to javafx.fxml;
